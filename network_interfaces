@@ -1,0 +1,22 @@
+auto lo
+iface lo inet loopback
+
+iface eth0 inet manual
+iface eth0 inet6 manual
+
+auto br0
+iface br0 inet static
+	address 10.11.11.1/24
+	bridge-ports eth1.1111
+	# Enable IPv4 forward
+	up  sysctl -w net.ipv4.ip_forward=1
+
+# Intentional not fdXX:XXXX::1/64
+iface br0 inet6 static
+	address fd11:1111::/64
+	# Enable IPv6 forward
+	up  sysctl -w net.ipv6.conf.eth0.accept_ra=2
+	up  sysctl -w net.ipv6.conf.all.forwarding=1
+
+source /etc/network/interfaces.d/*
+

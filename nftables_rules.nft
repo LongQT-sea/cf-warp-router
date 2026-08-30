@@ -1,0 +1,45 @@
+#!/usr/sbin/nft -f
+# NAT and kill switch for br0 clients
+# This table is additive to the `cloudflare-warp` table own by warp-svc
+
+# Idempotent reload
+add table inet router
+delete table inet router
+
+table inet router {
+    chain forward {
+        type filter hook forward priority filter; policy drop;
+        ct state invalid drop
+
+        # The kill switch
+        iifname "br0" oifname "CloudflareWARP" accept
+
+        # Return path
+        iifname "CloudflareWARP" oifname "br0" ct state established,related accept
+        jump handle_reject
+    }
+
+    chain handle_reject {
+        meta l4proto tcp reject with tcp reset
+        reject with icmpx admin-prohibited
+    }
+
+    # TCP MSS for egress traffic is already clamped by warp-svc `cloudflare-warp` forward chain
+    chain mangle_forward {
+        type filter hook forward priority mangle; policy accept;
+        iifname "CloudflareWARP" tcp flags & (fin|syn|rst) == syn tcp option maxseg size set rt mtu
+    }
+
+    # Clients pointed at 8.8.8.8 or 1.1.1.1 are transparently served by the router instead
+    chain dstnat {
+        type nat hook prerouting priority dstnat; policy accept;
+        iifname "br0" udp dport 53 redirect to :53
+        iifname "br0" tcp dport 53 redirect to :53
+    }
+
+    # Why NAT66: CloudflareWARP only have a single /128
+    chain srcnat {
+        type nat hook postrouting priority srcnat; policy accept;
+        oifname "CloudflareWARP" masquerade
+    }
+}

@@ -1,0 +1,48 @@
+http:
+  address: 0.0.0.0:3000
+users: []
+dns:
+  bind_hosts:
+    - 127.0.0.1
+    - ::1
+  port: 5354
+  ratelimit: 500
+  upstream_dns:
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+    - https://dns.quad9.net/dns-query
+  bootstrap_dns:
+    - 1.0.0.1
+    - 2606:4700:4700::1001
+    - 8.8.8.8
+    - 2001:4860:4860::8888
+    - 9.9.9.9
+    - 2620:fe::fe
+  fallback_dns:
+    - 1.0.0.1
+    - 2606:4700:4700::1001
+    - 8.8.8.8
+    - 2001:4860:4860::8888
+    - 9.9.9.9
+    - 2620:fe::fe
+  cache_size: 8388608
+  cache_optimistic: true
+  use_private_ptr_resolvers: false
+  local_ptr_upstreams:
+    - 10.11.11.1
+  use_http3_upstreams: true
+querylog:
+  interval: 24h
+  ignored_enabled: true
+  ignored:
+    - '*.arpa'
+statistics:
+  ignored_enabled: true
+  ignored:
+    - '*.arpa'
+clients:
+  runtime_sources:
+    rdns: false
+log:
+  enabled: false
+schema_version: 28

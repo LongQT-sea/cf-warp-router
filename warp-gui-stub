@@ -1,0 +1,6 @@
+Package: warp-gui-stub
+Version: 1.0
+Architecture: all
+Maintainer: Tieu Long <long025733@gmail.com>
+Provides: libwebkit2gtk-4.1-0, libayatana-appindicator3-1, gnupg2, desktop-file-utils, libpcap0.8
+Description: Dummy package to satisfy cloudflare-warp GUI deps
