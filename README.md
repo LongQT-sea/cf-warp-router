@@ -58,8 +58,17 @@ pct create "${VMID:=1111}" local:vztmpl/cf-warp-router_latest.tar \
 pct start $VMID
 ```
 
-Now for each VM or container you want to connect to this CF WARP router, just use the same $BRIDGE and set VLAN ID to `1111`
+To connect VM or container to this CF WARP router:
+- Make sure its NIC is in the same **VLAN-aware bridge** (default `vmbr0`).
+- Edit the NIC and set **VLAN Tag** to `1111`.
+
 ![Set VLAN for VM/CT](./assets/pve_set_network_vlan.png)
+
+> [!WARNING]
+> Don't leave a second NIC on the guest. It will pick up a lease from your ISP router and traffic will prefer that path, bypassing the tunnel and the kill switch.
+
+> [!NOTE]
+> This `1111` is the client VLAN and is unrelated to `$VLAN_ID` above, which tags the router's own uplink.
 
 ---
 
