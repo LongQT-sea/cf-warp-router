@@ -1,8 +1,6 @@
 # CF WARP ROUTER
 CloudFlare WARP router for Proxmox VE, enjoy a premium internet route for your VMs and containers.
 
-**[Quick Start](#quick-start)**
-
 ## Why
 Does your ISP give you a terrible international route? Does `apt/dnf upgrade` or `git clone` crawl at KB/s? Do GitHub Actions artifacts or SourceForge downloads take hours? This router sends your outbound traffic over Cloudflare's network instead, which usually turns those KB/s into MB/s.
 
@@ -10,7 +8,7 @@ Does your ISP give you a terrible international route? Does `apt/dnf upgrade` or
 
 - **Ad blocking** – work out of the box with AdGuard Home plus DNS over HTTPS upstreams preconfigured.
 - **Kill switch** — if the tunnel drops, client traffic stops. No silent fallback to the plain ISP route.
-- **Easy configure** — clients just tag onto VLAN `1111`; no per-device configuration.
+- **Easy to configure** — clients just tag onto VLAN `1111`; no per-device configuration.
 
 ## Quick Start
 
@@ -19,12 +17,12 @@ Does your ISP give you a terrible international route? Does `apt/dnf upgrade` or
 > All the steps below can be done using the Proxmox VE web GUI, though not recommended.
 
 > [!IMPORTANT]
-> Your $BRIDGE (default is `vmbr0`) must have `VLAN aware` enabled, e.g.:<br>
+> Your BRIDGE (default is `vmbr0`) must have `VLAN aware` enabled, e.g.:<br>
 > ![Enable VLAN aware on the bridge](./assets/pve_bridge_vlan_aware.png)
 
-Obtaining OCI Images:
+Pulling the `cf-warp-router` OCI image:
 ```sh
-skopeo copy docker://docker.io/long025733/cf-warp-router:latest  oci-archive:/var/lib/vz/template/cache/cf-warp-router_latest.tar
+skopeo copy docker://ghcr.io/longqt-sea/cf-warp-router:latest oci-archive:/var/lib/vz/template/cache/cf-warp-router_latest.tar
 ```
 
 Create the container:

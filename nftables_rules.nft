@@ -1,5 +1,5 @@
 #!/usr/sbin/nft -f
-# NAT and kill switch for br0 clients
+# NAT and kill switch for br0.1111 clients
 # This table is additive to the `cloudflare-warp` table own by warp-svc
 
 # Idempotent reload
@@ -12,10 +12,10 @@ table inet router {
         ct state invalid drop
 
         # The kill switch
-        iifname "br0" oifname "CloudflareWARP" accept
+        iifname "br0.1111" oifname "CloudflareWARP" accept
 
         # Return path
-        iifname "CloudflareWARP" oifname "br0" ct state established,related accept
+        iifname "CloudflareWARP" oifname "br0.1111" ct state established,related accept
         jump handle_reject
     }
 
@@ -33,8 +33,8 @@ table inet router {
     # Clients pointed at 8.8.8.8 or 1.1.1.1 are transparently served by the router instead
     chain dstnat {
         type nat hook prerouting priority dstnat; policy accept;
-        iifname "br0" udp dport 53 redirect to :53
-        iifname "br0" tcp dport 53 redirect to :53
+        iifname "br0.1111" udp dport 53 redirect to :53
+        iifname "br0.1111" tcp dport 53 redirect to :53
     }
 
     # Why NAT66: CloudflareWARP only have a single /128

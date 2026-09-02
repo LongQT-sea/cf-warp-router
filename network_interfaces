@@ -6,17 +6,26 @@ iface eth0 inet6 manual
 
 auto br0
 iface br0 inet static
-	address 10.11.11.1/24
-	bridge-ports eth1.1111
-	# Enable IPv4 forward
-	up  sysctl -w net.ipv4.ip_forward=1
+	bridge-ports eth1
+	bridge-vlan-aware yes
+	bridge-vids 1111 2222
 
-# Intentional not fdXX:XXXX::1/64
-iface br0 inet6 static
-	address fd11:1111::/64
-	# Enable IPv6 forward
+	# Enable IPv4/IPv6 forward
+	up  sysctl -w net.ipv4.ip_forward=1
 	up  sysctl -w net.ipv6.conf.eth0.accept_ra=2
 	up  sysctl -w net.ipv6.conf.all.forwarding=1
 
-source /etc/network/interfaces.d/*
+auto br0.1111
+iface br0.1111 inet static
+	address 10.11.11.1/24
 
+iface br0.1111 inet6 static
+	# Intentional not fdXX:XXXX::1/64
+	address fdfd:1111::/64
+
+# Private LAN
+auto br0.2222
+iface br0.2222 inet static
+	address 10.22.22.1/24
+
+source /etc/network/interfaces.d/*
