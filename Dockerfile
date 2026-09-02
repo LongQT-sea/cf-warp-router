@@ -19,10 +19,8 @@
 
 FROM debian:13-slim
 
-# Set build time variables
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Set environment variables
 ENV TERM="xterm-256color"
 
 COPY warp-gui-stub /tmp/stub/DEBIAN/control
@@ -35,8 +33,9 @@ apt-get install -y --no-install-recommends \
     dbus \
     iproute2 \
     iputils-ping \
-    isc-dhcp-client \
     ifupdown2 \
+    nftables \
+    isc-dhcp-client \
     dnsmasq \
     locales \
     procps \
@@ -60,7 +59,6 @@ ln -s /usr/bin/busybox /usr/local/bin/brctl
 dpkg-deb --build /tmp/stub /tmp/warp-gui-stub.deb
 dpkg -i /tmp/warp-gui-stub.deb
 
-# Install CF WARP
 curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg |
 gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
 
@@ -70,7 +68,6 @@ tee /etc/apt/sources.list.d/cloudflare-client.list
 apt-get update
 apt-get install -y --no-install-recommends cloudflare-warp
 
-# Cleanup
 apt-get autoremove -y
 apt-get clean
 rm -rf /var/lib/apt/lists/*
@@ -100,20 +97,22 @@ systemctl enable firstboot-warp-register
 sed -i '/^flush ruleset$/d' /etc/nftables.conf
 echo 'include "/etc/nftables.d/*.nft"' >> /etc/nftables.conf
 mkdir -p /etc/iproute2/rt_tables.d
+EOF
 
-# To avoid memory leak on warp-svc daemon
-echo '0 4 * * 0 root systemctl restart warp-svc' >> /etc/cron.d/warp-svc
+# Cap warp-svc memory usage to 350MB
+COPY <<'EOF' /etc/systemd/system/warp-svc.service.d/override.conf
+[Service]
+MemoryMax=400M
+MemorySwapMax=400M
 EOF
 
 COPY nftables_rules.nft /etc/nftables.d/50-router.nft
 COPY network_interfaces /etc/network/interfaces
 COPY dnsmasq.conf /etc/dnsmasq.d/dhcp.conf
 
-# Install AdGuard Home
 RUN curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
 COPY AdGuardHome.yaml /opt/AdGuardHome/AdGuardHome.yaml
 
-# Mask unneeded services in container
 RUN <<EOF
 systemctl mask \
     systemd-udevd.service \
@@ -125,7 +124,6 @@ systemctl mask \
     sys-kernel-tracing.mount
 EOF
 
-# Config journald (store in RAM only)
 COPY <<EOF /etc/systemd/journald.conf.d/container.conf
 [Journal]
 Storage=volatile
@@ -133,47 +131,22 @@ ForwardToSyslog=no
 RuntimeMaxUse=500M
 EOF
 
-# OpenSSH allow root login
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-COPY <<'EOF' /entrypoint.sh
-#!/bin/sh
-mount -o remount,rw /sys/fs/cgroup
-mount -o remount,rw /proc/sys
-
-mkdir -p /dev/net
-mknod /dev/net/tun c 10 200
-
-# Set root password and edit hosts file on first boot
-if [ -n "$PASSWORD" ] && [ ! -f /etc/machine-id ]; then
-    echo "root:$PASSWORD" | chpasswd
-    echo "10.11.11.1 $HOSTNAME" >> /etc/hosts
-    echo "fd11:1111:: $HOSTNAME" >> /etc/hosts
-fi
-
-exec "$@"
-EOF
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-
-# Run with custom entrypoint script
 ENTRYPOINT ["/entrypoint.sh"]
 
-# Default command to systemd init
 CMD ["/sbin/init"]
 
-# Set working dir
 WORKDIR "/root"
 
-# Expose SSH
 EXPOSE 22/tcp
 
-# Shutdown gracefully
 STOPSIGNAL SIGRTMIN+3
 
-# Labels & Annotations
 LABEL org.opencontainers.image.os="linux"
 LABEL org.opencontainers.image.author="Tieu Long <long025733@gmail.com>"
-LABEL org.opencontainers.image.description="CloudFlare WARP"
-
+LABEL org.opencontainers.image.description="Cloudflare WARP"
 LABEL io.containers.type="system"
 LABEL io.container.runtime.init="true"
