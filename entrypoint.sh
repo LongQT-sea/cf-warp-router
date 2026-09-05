@@ -9,7 +9,7 @@ mknod /dev/net/tun c 10 200
 [ ! -f /etc/machine-id ] && {
     [ -n "$PASSWORD" ] && echo "root:$PASSWORD" | chpasswd
     echo "10.11.11.1 $HOSTNAME" >> /etc/hosts
-    echo "fd11:1111:: $HOSTNAME" >> /etc/hosts
+    echo "fdfd:1111:: $HOSTNAME" >> /etc/hosts
 }
 
 exec "$@"
