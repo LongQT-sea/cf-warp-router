@@ -8,8 +8,8 @@ mknod /dev/net/tun c 10 200
 # Set root password and edit hosts file on first boot
 [ ! -f /etc/machine-id ] && {
     [ -n "$PASSWORD" ] && echo "root:$PASSWORD" | chpasswd
-    echo "10.11.11.1 $HOSTNAME" >> /etc/hosts
-    echo "fdfd:1111:: $HOSTNAME" >> /etc/hosts
+    echo "10.11.11.1 ${HOSTNAME:-warp-router}" >> /etc/hosts
+    echo "fdfd:1111:: ${HOSTNAME:-warp-router}" >> /etc/hosts
 }
 
 exec "$@"
